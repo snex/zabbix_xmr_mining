@@ -1,0 +1,84 @@
+#!/usr/bin/ruby
+
+require 'time'
+require 'net/http'
+require 'json'
+
+class Time
+  def readable
+    case self.to_i
+    when 0 then 'just now'
+    when 1 then '1 second ago'
+    when 2..59 then self.to_i.to_s + ' seconds ago'
+    when 60..119 then '1 minute ago'
+    when 120..3540 then (self.to_i / 60).to_i.to_s + ' minutes ago'
+    when 3541..7100 then 'an hour ago'
+    when 7101..82_800 then ((self.to_i + 99) / 3600).to_i.to_s + ' hours ago'
+    when 82_801..172_000 then '1 day ago'
+    else ((self.to_i + 800) / 86_400).to_i.to_s + ' days ago'
+    end
+  end
+end
+
+xmr_addr = ARGV[0]
+
+info_url = 'https://mini.p2pool.observer/api/pool_info'
+shares_url = "https://mini.p2pool.observer/api/shares_in_window/#{xmr_addr}?window=8640"
+payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
+local_info_file = '/tmp/p2pool_data/local/stats'
+
+uri = URI(info_url)
+info_res = JSON.parse(Net::HTTP.get(uri))
+
+uri = URI(shares_url)
+shares_res = JSON.parse(Net::HTTP.get(uri)).sort { |a,b| a['height'] <=> b['height'] }
+
+cur_time = info_res['sidechain']['timestamp']
+cur_height = info_res['sidechain']['height']
+prev_day = cur_height - 8640
+pplns_window = cur_height - 2160
+
+uri = URI(payouts_url)
+payouts_res = JSON.parse(Net::HTTP.get(uri)).sort { |a,b| a['height'] <=> b['height'] }
+
+local_info = JSON.parse(File.readlines(local_info_file).join)
+
+current_shares = shares_res.select { |r| !r.has_key?('parent') && r['height'] >= pplns_window }.count
+current_uncles = shares_res.select { |r| r.has_key?('parent') && r['height'] >= pplns_window }.count
+
+ranges = (prev_day..cur_height).each_slice(72).map do |a|
+  a.first..a.last
+end
+
+shares = ranges.map do |range|
+  shares_res.select { |r| !r.has_key?('parent') && range.include?(r['height']) }.count.to_s
+end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
+
+uncles = ranges.map do |range|
+  shares_res.select { |r| r.has_key?('parent') && range.include?(r['height']) }.count.to_s
+end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
+
+payouts = ranges.map do |range|
+  payouts_res.select { |r| range.include?(r['height']) }.count.to_s
+end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
+
+last_share_time = "Last share #{Time.at(cur_time - shares_res.last['timestamp']).readable}"
+current_shares_info = "Current shares: #{current_shares} (+#{current_uncles} uncles)"
+current_effort = "Current effort: #{local_info['current_effort']}%"
+ls_size = last_share_time.size
+cs_size = current_shares_info.size
+ce_size = current_effort.size
+total_padding_size = (134 - (ls_size + cs_size + ce_size) + 1)
+
+padding_sizes = if total_padding_size.even?
+                  [total_padding_size / 2, total_padding_size / 2]
+                else
+                  [total_padding_size / 2, total_padding_size / 2 + 1]
+                end
+
+puts "#{last_share_time}#{' ' * padding_sizes[0]}#{current_shares_info}#{' ' * padding_sizes[1]}#{current_effort} | Last 5 Payouts"
+puts "SHARES:  [<#{shares}<] | #{Time.at(payouts_res[-1]['timestamp'])}: #{("%0.12f" % (payouts_res[-1]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(20)} |"
+puts "UNCLES:  [<#{uncles}<] | #{Time.at(payouts_res[-2]['timestamp'])}: #{("%0.12f" % (payouts_res[-2]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(20)} |"
+puts "PAYOUTS: [<#{payouts}<] | #{Time.at(payouts_res[-3]['timestamp'])}: #{("%0.12f" % (payouts_res[-3]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(20)} |"
+puts "#{' ' * 135} | #{Time.at(payouts_res[-4]['timestamp'])}: #{("%0.12f" % (payouts_res[-4]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(20)} |"
+puts "#{' ' * 135} | #{Time.at(payouts_res[-5]['timestamp'])}: #{("%0.12f" % (payouts_res[-5]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(20)} |"
