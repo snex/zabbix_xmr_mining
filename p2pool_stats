@@ -68,7 +68,7 @@ current_effort = "Current effort: #{local_info['current_effort']}%"
 ls_size = last_share_time.size
 cs_size = current_shares_info.size
 ce_size = current_effort.size
-total_padding_size = (134 - (ls_size + cs_size + ce_size) + 1)
+total_padding_size = 135 - (ls_size + cs_size + ce_size)
 
 padding_sizes = if total_padding_size.even?
                   [total_padding_size / 2, total_padding_size / 2]
@@ -76,9 +76,13 @@ padding_sizes = if total_padding_size.even?
                   [total_padding_size / 2, total_padding_size / 2 + 1]
                 end
 
+last_payout_time = "Last payout #{Time.at(cur_time - payouts_res.last['timestamp']).readable}"
+lp_size = last_payout_time.size
+lp_padding = 135 - lp_size
+
 puts "#{last_share_time}#{' ' * padding_sizes[0]}#{current_shares_info}#{' ' * padding_sizes[1]}#{current_effort} | Last 5 Payouts"
 puts "SHARES:  [<#{shares}<] | #{Time.at(payouts_res[-1]['timestamp'])}: #{("%0.12f" % (payouts_res[-1]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
 puts "UNCLES:  [<#{uncles}<] | #{Time.at(payouts_res[-2]['timestamp'])}: #{("%0.12f" % (payouts_res[-2]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
 puts "PAYOUTS: [<#{payouts}<] | #{Time.at(payouts_res[-3]['timestamp'])}: #{("%0.12f" % (payouts_res[-3]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
 puts "#{' ' * 135} | #{Time.at(payouts_res[-4]['timestamp'])}: #{("%0.12f" % (payouts_res[-4]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
-puts "#{' ' * 135} | #{Time.at(payouts_res[-5]['timestamp'])}: #{("%0.12f" % (payouts_res[-5]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
+puts "#{last_payout_time}#{' ' * lp_padding} | #{Time.at(payouts_res[-5]['timestamp'])}: #{("%0.12f" % (payouts_res[-5]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
