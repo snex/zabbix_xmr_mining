@@ -18,7 +18,7 @@ with type Text and Interval 5m or greater
 
 ## xmr_hr
 ### Requirements
-* Nothing Special
+* jq
 ### Setup
 * Place the following in your zabbix-agent.conf
 ```
