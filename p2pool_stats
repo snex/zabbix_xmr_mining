@@ -37,11 +37,11 @@ shares_url = "https://mini.p2pool.observer/api/shares_in_window/#{xmr_addr}?wind
 payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
 local_info_file = '/tmp/p2pool_data/local/stats'
 
-info_res = VCR.use_cassette('info', re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+info_res = VCR.use_cassette('info', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(info_url)))
 end
 
-shares_res = VCR.use_cassette('shares', re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+shares_res = VCR.use_cassette('shares', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(shares_url))).sort { |a,b| a['height'] <=> b['height'] }
 end
 
@@ -50,7 +50,7 @@ cur_height = info_res['sidechain']['height']
 prev_day = cur_height - 8640
 pplns_window = cur_height - 2160
 
-payouts_res = VCR.use_cassette('payouts', re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+payouts_res = VCR.use_cassette('payouts', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(payouts_url))).sort { |a,b| a['height'] <=> b['height'] }
 end
 
