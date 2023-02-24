@@ -3,6 +3,16 @@
 require 'time'
 require 'net/http'
 require 'json'
+require 'fileutils'
+require 'vcr'
+require 'webmock'
+
+FileUtils.mkdir_p('/tmp/vcr')
+
+VCR.configure do |c|
+  c.hook_into :webmock
+  c.cassette_library_dir = '/tmp/vcr'
+end
 
 class Time
   def readable
@@ -27,19 +37,22 @@ shares_url = "https://mini.p2pool.observer/api/shares_in_window/#{xmr_addr}?wind
 payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
 local_info_file = '/tmp/p2pool_data/local/stats'
 
-uri = URI(info_url)
-info_res = JSON.parse(Net::HTTP.get(uri))
+info_res = VCR.use_cassette('info', re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+  JSON.parse(Net::HTTP.get(URI(info_url)))
+end
 
-uri = URI(shares_url)
-shares_res = JSON.parse(Net::HTTP.get(uri)).sort { |a,b| a['height'] <=> b['height'] }
+shares_res = VCR.use_cassette('shares', re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+  JSON.parse(Net::HTTP.get(URI(shares_url))).sort { |a,b| a['height'] <=> b['height'] }
+end
 
 cur_time = info_res['sidechain']['timestamp']
 cur_height = info_res['sidechain']['height']
 prev_day = cur_height - 8640
 pplns_window = cur_height - 2160
 
-uri = URI(payouts_url)
-payouts_res = JSON.parse(Net::HTTP.get(uri)).sort { |a,b| a['height'] <=> b['height'] }
+payouts_res = VCR.use_cassette('payouts', re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+  JSON.parse(Net::HTTP.get(URI(payouts_url))).sort { |a,b| a['height'] <=> b['height'] }
+end
 
 local_info = JSON.parse(File.readlines(local_info_file).join)
 

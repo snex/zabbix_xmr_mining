@@ -4,17 +4,19 @@ Zabbix Tools to Monitor XMR Mining Stats
 ## p2pool_stats
 ### Requirements
 * ruby
+* vcr gem (built with version 6.1.0)
+* webmock gem (built with version 3.18.1)
 ### Setup
 * Place the following in your zabbix-agent.conf
 ```
 AllowKey=system.run[/usr/local/bin/p2pool_stats*]
 ```
 * Add a User Defined Macro in your Zabbix called {$XMR_ADDR} with your XMR mining address for the value
+* Ensure that /tmp/p2pool_data exists before running p2pool
 * Use the following switches when you start p2pool: ```--data-api /tmp/p2pool_data --local-api```
 * Place p2pool_stats into /usr/local/bin and make sure it is executable for the Zabbix user
-* Create an Item in Zabbix with Key
+* Create an Item (type Text) in Zabbix with Key
 ```system.run[/usr/local/bin/p2pool_stats {$XMR_ADDR}]```
-with type Text and Interval 5m or greater
 
 ## xmr_hr
 ### Requirements
