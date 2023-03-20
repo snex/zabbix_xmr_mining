@@ -96,9 +96,13 @@ lp_size = last_payout_time.size
 cpe_size = current_pool_effort.size
 lp_padding = 134 - (lp_size + cpe_size)
 
+payout_vals = payouts_res.map do |pr|
+  "#{Time.at(pr.dig('timestamp'))}: #{('%0.12f' % ((pr.dig('coinbase', 'reward').to_i / 1_000_000_000_000.0))).rjust(18)}".rjust(45)
+end.reverse
+
 puts "#{last_share_time}#{' ' * padding_sizes_top[0]}#{current_shares_info}#{' ' * padding_sizes_top[1]}#{current_effort} | Last 5 Payouts"
-puts "SHARES:  [<#{shares}<] | #{Time.at(payouts_res[-1]['timestamp'])}: #{("%0.12f" % (payouts_res[-1]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
-puts "UNCLES:  [<#{uncles}<] | #{Time.at(payouts_res[-2]['timestamp'])}: #{("%0.12f" % (payouts_res[-2]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
-puts "PAYOUTS: [<#{payouts}<] | #{Time.at(payouts_res[-3]['timestamp'])}: #{("%0.12f" % (payouts_res[-3]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
-puts "#{' ' * 135} | #{Time.at(payouts_res[-4]['timestamp'])}: #{("%0.12f" % (payouts_res[-4]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
-puts "#{last_payout_time}#{' ' * lp_padding} #{current_pool_effort} | #{Time.at(payouts_res[-5]['timestamp'])}: #{("%0.12f" % (payouts_res[-5]['coinbase']['reward'] / 1_000_000_000_000.0)).rjust(18)} |"
+puts "SHARES:  [<#{shares}<] | #{payout_vals.dig(0).to_s.rjust(45)} |"
+puts "UNCLES:  [<#{uncles}<] | #{payout_vals.dig(1).to_s.rjust(45)} |"
+puts "PAYOUTS: [<#{payouts}<] | #{payout_vals.dig(2).to_s.rjust(45)} |"
+puts "#{' ' * 135} | #{payout_vals.dig(3).to_s.rjust(45)} |"
+puts "#{last_payout_time}#{' ' * lp_padding} #{current_pool_effort} | #{payout_vals.dig(4).to_s.rjust(45)} |"
