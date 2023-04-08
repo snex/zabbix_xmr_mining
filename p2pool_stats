@@ -35,7 +35,7 @@ xmr_addr = ARGV[0]
 info_url = 'https://mini.p2pool.observer/api/pool_info'
 shares_url = "https://mini.p2pool.observer/api/shares_in_window/#{xmr_addr}?window=8640"
 payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
-local_info_file = '/tmp/p2pool_data/local/stats'
+local_info_file = '/tmp/p2pool_data/local/stratum'
 
 info_res = VCR.use_cassette('info', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(info_url)))
