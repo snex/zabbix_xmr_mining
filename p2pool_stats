@@ -33,7 +33,7 @@ end
 xmr_addr = ARGV[0]
 
 info_url = 'https://mini.p2pool.observer/api/pool_info'
-shares_url = "https://mini.p2pool.observer/api/shares_in_window/#{xmr_addr}?window=8640"
+shares_url = "https://mini.p2pool.observer/api/side_blocks_in_window/#{xmr_addr}?window=8640"
 payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
 local_info_file = '/tmp/p2pool_data/local/stratum'
 
