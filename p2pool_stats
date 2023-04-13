@@ -58,7 +58,7 @@ end
 local_info = JSON.parse(File.readlines(local_info_file).join)
 
 current_shares = shares_res.select { |r| r['uncle_of'] == '0000000000000000000000000000000000000000000000000000000000000000' && r['side_height'] >= pplns_window }.count
-current_uncles = shares_res.select { |r| !r['uncle_of'] != '0000000000000000000000000000000000000000000000000000000000000000' && r['side_height'] >= pplns_window }.count
+current_uncles = shares_res.select { |r| r['uncle_of'] != '0000000000000000000000000000000000000000000000000000000000000000' && r['side_height'] >= pplns_window }.count
 
 ranges = (prev_day..cur_height).each_slice(72).map do |a|
   a.first..a.last
