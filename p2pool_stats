@@ -52,28 +52,28 @@ prev_day = cur_height - 8640
 pplns_window = cur_height - 2160
 
 payouts_res = VCR.use_cassette('payouts', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
-  JSON.parse(Net::HTTP.get(URI(payouts_url))).sort { |a,b| a['height'] <=> b['height'] }
+  JSON.parse(Net::HTTP.get(URI(payouts_url))).sort { |a,b| a['side_height'] <=> b['side_height'] }
 end
 
 local_info = JSON.parse(File.readlines(local_info_file).join)
 
-current_shares = shares_res.select { |r| !r.has_key?('parent') && r['side_height'] >= pplns_window }.count
-current_uncles = shares_res.select { |r| r.has_key?('parent') && r['side_height'] >= pplns_window }.count
+current_shares = shares_res.select { |r| r['uncle_of'] == '0000000000000000000000000000000000000000000000000000000000000000' && r['side_height'] >= pplns_window }.count
+current_uncles = shares_res.select { |r| !r['uncle_of'] != '0000000000000000000000000000000000000000000000000000000000000000' && r['side_height'] >= pplns_window }.count
 
 ranges = (prev_day..cur_height).each_slice(72).map do |a|
   a.first..a.last
 end
 
 shares = ranges.map do |range|
-  shares_res.select { |r| !r.has_key?('parent') && range.include?(r['height']) }.count.to_s
+  shares_res.select { |r| r['uncle_of'] == '0000000000000000000000000000000000000000000000000000000000000000' && range.include?(r['side_height']) }.count.to_s
 end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
 
 uncles = ranges.map do |range|
-  shares_res.select { |r| r.has_key?('parent') && range.include?(r['height']) }.count.to_s
+  shares_res.select { |r| r['uncle_of'] != '0000000000000000000000000000000000000000000000000000000000000000' && range.include?(r['side_height']) }.count.to_s
 end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
 
 payouts = ranges.map do |range|
-  payouts_res.select { |r| range.include?(r['height']) }.count.to_s
+  payouts_res.select { |r| range.include?(r['side_height']) }.count.to_s
 end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
 
 last_share_time = "Last share #{Time.at(cur_time - shares_res.last['timestamp']).readable}"
