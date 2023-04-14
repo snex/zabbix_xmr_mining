@@ -97,7 +97,7 @@ cpe_size = current_pool_effort.size
 lp_padding = 134 - (lp_size + cpe_size)
 
 payout_vals = payouts_res.map do |pr|
-  "#{Time.at(pr.dig('timestamp'))}: #{('%0.12f' % ((pr.dig('coinbase', 'reward').to_i / 1_000_000_000_000.0))).rjust(18)}".rjust(45)
+  "#{Time.at(pr.dig('timestamp'))}: #{('%0.12f' % ((pr['coinbase_reward'].to_i / 1_000_000_000_000.0))).rjust(18)}".rjust(45)
 end.reverse
 
 puts "#{last_share_time}#{' ' * padding_sizes_top[0]}#{current_shares_info}#{' ' * padding_sizes_top[1]}#{current_effort} | Last 5 Payouts"
