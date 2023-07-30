@@ -57,19 +57,19 @@ end
 
 local_info = JSON.parse(File.readlines(local_info_file).join)
 
-current_shares = shares_res.select { |r| r['uncle_of'].blank?  && r['side_height'] >= pplns_window }.count
-current_uncles = shares_res.select { |r| r['uncle_of'].present?  && r['side_height'] >= pplns_window }.count
+current_shares = shares_res.select { |r| !r.has_key?('uncle_of') && r['side_height'] >= pplns_window }.count
+current_uncles = shares_res.select { |r| r.has_key?('uncle_of') && r['side_height'] >= pplns_window }.count
 
 ranges = (prev_day..cur_height).each_slice(72).map do |a|
   a.first..a.last
 end
 
 shares = ranges.map do |range|
-  shares_res.select { |r| r['uncle_of'].blank? && range.include?(r['side_height']) }.count.to_s
+  shares_res.select { |r| !r.has_key?('uncle_of') && range.include?(r['side_height']) }.count.to_s
 end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
 
 uncles = ranges.map do |range|
-  shares_res.select { |r| r['uncle_of'].present?  && range.include?(r['side_height']) }.count.to_s
+  shares_res.select { |r| r.has_key?('uncle_of') && range.include?(r['side_height']) }.count.to_s
 end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
 
 payouts = ranges.map do |range|
