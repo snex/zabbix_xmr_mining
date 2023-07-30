@@ -49,7 +49,7 @@ cur_time = info_res['sidechain']['timestamp']
 cur_pool_effort = info_res['sidechain']['effort']['current']
 cur_height = info_res['sidechain']['height']
 prev_day = cur_height - 8640
-pplns_window = cur_height - info_res['sidechain']['consensus']['pplns_window'].to_i
+pplns_window = cur_height - info_res['sidechain']['window']['blocks'].to_i
 
 payouts_res = VCR.use_cassette('payouts', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(payouts_url))).sort { |a,b| a['side_height'] <=> b['side_height'] }
