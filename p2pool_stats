@@ -36,6 +36,7 @@ info_url = 'https://mini.p2pool.observer/api/pool_info'
 shares_url = "https://mini.p2pool.observer/api/side_blocks_in_window/#{xmr_addr}?window=8640"
 payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
 local_info_file = '/tmp/p2pool_data/local/stratum'
+raffle_url = 'https://xmrvsbeast.com/p2pool/stats'
 
 info_res = VCR.use_cassette('info', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(info_url)))
@@ -43,6 +44,10 @@ end
 
 shares_res = VCR.use_cassette('shares', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(shares_url))).sort { |a,b| a['side_height'] <=> b['side_height'] }
+end
+
+raffle_res = VCR.use_cassette('raffle', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+  JSON.parse(Net::HTTP.get(URI(raffle_url)))
 end
 
 cur_time = info_res['sidechain']['timestamp']
@@ -106,3 +111,4 @@ puts "UNCLES:  [<#{uncles}<] | #{payout_vals.dig(1).to_s.rjust(45)} |"
 puts "PAYOUTS: [<#{payouts}<] | #{payout_vals.dig(2).to_s.rjust(45)} |"
 puts "#{' ' * 135} | #{payout_vals.dig(3).to_s.rjust(45)} |"
 puts "#{last_payout_time}#{' ' * lp_padding} #{current_pool_effort} | #{payout_vals.dig(4).to_s.rjust(45)} |"
+puts "Raffle Winner: #{raffle_res['winner']}, Time Left: #{raffle_res['time_remain']} minutes, HR: #{raffle_res['bonus_hr']}+#{raffle_res['donate_hr']} kH/s"
