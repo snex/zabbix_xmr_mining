@@ -31,10 +31,18 @@ class Time
 end
 
 xmr_addr = ARGV[0]
+p2pool_host = case ARGV[1]
+              when 'main'
+                'https://p2pool.observer'
+              when 'mini'
+                'https://mini.p2pool.observer'
+              else
+                'https://mini.p2pool.observer'
+              end
 
-info_url = 'https://mini.p2pool.observer/api/pool_info'
-shares_url = "https://mini.p2pool.observer/api/side_blocks_in_window/#{xmr_addr}?window=8640"
-payouts_url = "https://mini.p2pool.observer/api/payouts/#{xmr_addr}"
+info_url = "#{p2pool_host}/api/pool_info"
+shares_url = "#{p2pool_host}/api/side_blocks_in_window/#{xmr_addr}?window=8640"
+payouts_url = "#{p2pool_host}/api/payouts/#{xmr_addr}"
 local_info_file = '/tmp/p2pool_data/local/stratum'
 raffle_url = 'https://xmrvsbeast.com/p2pool/stats'
 
@@ -69,17 +77,19 @@ ranges = (prev_day..cur_height).each_slice(72).map do |a|
   a.first..a.last
 end
 
+window_bar_loc = (prev_day..cur_height).each_slice(72).to_a.size - (info_res['sidechain']['window']['blocks'].to_i / 72) - 1
+
 shares = ranges.map do |range|
   shares_res.select { |r| !r.has_key?('uncle_of') && range.include?(r['side_height']) }.count.to_s
-end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
+end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(window_bar_loc, '|').join
 
 uncles = ranges.map do |range|
   shares_res.select { |r| r.has_key?('uncle_of') && range.include?(r['side_height']) }.count.to_s
-end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
+end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(window_bar_loc, '|').join
 
 payouts = ranges.map do |range|
   payouts_res.select { |r| range.include?(r['side_height']) }.count.to_s
-end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(90, '|').join
+end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(window_bar_loc, '|').join
 
 last_share_time = "Last share #{shares_res.last ? Time.at(cur_time - shares_res.last['timestamp']).readable : 'more than 1 day ago'}"
 current_shares_info = "Current shares: #{current_shares} (+#{current_uncles} uncles)"
