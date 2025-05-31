@@ -36,9 +36,12 @@ p2pool_host = case ARGV[1]
                 'https://p2pool.observer'
               when 'mini'
                 'https://mini.p2pool.observer'
+              when 'nano'
+                'https://nano.p2pool.observer'
               else
                 'https://mini.p2pool.observer'
               end
+raffle_validator = ARGV[2]
 
 info_url = "#{p2pool_host}/api/pool_info"
 shares_url = "#{p2pool_host}/api/side_blocks_in_window/#{xmr_addr}?window=8640"
@@ -52,10 +55,6 @@ end
 
 shares_res = VCR.use_cassette('shares', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
   JSON.parse(Net::HTTP.get(URI(shares_url))).sort { |a,b| a['side_height'] <=> b['side_height'] }
-end
-
-raffle_res = VCR.use_cassette('raffle', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
-  JSON.parse(Net::HTTP.get(URI(raffle_url)))
 end
 
 cur_time = info_res['sidechain']['timestamp']
@@ -121,4 +120,31 @@ puts "UNCLES:  [<#{uncles}<] | #{payout_vals.dig(1).to_s.rjust(45)} |"
 puts "PAYOUTS: [<#{payouts}<] | #{payout_vals.dig(2).to_s.rjust(45)} |"
 puts "#{' ' * 135} | #{payout_vals.dig(3).to_s.rjust(45)} |"
 puts "#{last_payout_time}#{' ' * lp_padding} #{current_pool_effort} | #{payout_vals.dig(4).to_s.rjust(45)} |"
-puts "Raffle Winner: #{raffle_res['winner']}, Round Type: #{raffle_res['round_type']} (#{raffle_res['players_round']} players), Time Left: #{raffle_res['time_remain']} minutes, HR: #{raffle_res['bonus_hr']}+#{raffle_res['donate_hr']} kH/s"
+
+exit unless raffle_validator
+
+raffle_res = VCR.use_cassette('raffle', record: :new_episodes, re_record_interval: 300, match_requests_on: [:method, :host, :path]) do
+  JSON.parse(Net::HTTP.get(URI(raffle_url)))
+end
+
+raffle_results = {
+  0 => 'VALID',
+  1 => 'Unable to fetch recent winners',
+  2 => "No winner at height #{raffle_res['block_height']}",
+  3 => "Unable to fetch blockhash for height #{raffle_res['block_height']}",
+  4 => "Bad timestamp for height #{raffle_res['block_height']}",
+  5 => "Blockhash doesn't match height #{raffle_res['block_height']}",
+  6 => 'Unable to fetch round types',
+  7 => "Bad round_type at height #{raffle_res['block_height']}",
+  8 => 'Unable to fetch players list',
+  9 => "Bad winner at height #{raffle_res['block_height']}"
+}
+
+#raffle_valid = if system("#{raffle_validator} -x 'http://xmr-node.local:8081' -h #{raffle_res['block_height']} -q -c")
+raffle_valid = if system("#{raffle_validator} -h #{raffle_res['block_height']} -q -c")
+                 raffle_results[0]
+               else
+                 raffle_results[$?.exitstatus]
+               end
+
+puts "Raffle Winner: #{raffle_res['winner']}, Round Type: #{raffle_res['round_type']} (#{raffle_res['players_round']} players), Time Left: #{raffle_res['time_remain']} minutes, HR: #{raffle_res['bonus_hr']}+#{raffle_res['donate_hr']} kH/s, Validator Results: #{raffle_valid}"
