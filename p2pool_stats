@@ -69,8 +69,8 @@ end
 
 local_info = JSON.parse(File.readlines(local_info_file).join)
 
-current_shares = shares_res.select { |r| !r.has_key?('uncle_of') && r['side_height'] >= pplns_window }.count
-current_uncles = shares_res.select { |r| r.has_key?('uncle_of') && r['side_height'] >= pplns_window }.count
+current_shares = shares_res.select { |r| !r.has_key?('uncle_of') && r['side_height'] >= pplns_window }.count rescue 0
+current_uncles = shares_res.select { |r| r.has_key?('uncle_of') && r['side_height'] >= pplns_window }.count rescue 0
 
 ranges = (prev_day..cur_height).each_slice(72).map do |a|
   a.first..a.last
