@@ -92,7 +92,7 @@ end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(window_bar_lo
 
 last_share_time = "Last share #{shares_res.last ? Time.at(cur_time - shares_res.last['timestamp']).readable : 'more than 1 day ago'}"
 current_shares_info = "Current shares: #{current_shares} (+#{current_uncles} uncles)"
-current_effort = "Current effort: #{local_info['current_effort']}%"
+current_effort = "Current effort: #{local_info['current_effort'].round(3)}%"
 ls_size = last_share_time.size
 cs_size = current_shares_info.size
 ce_size = current_effort.size
@@ -105,7 +105,7 @@ padding_sizes_top = if total_padding_size_top.even?
                 end
 
 last_payout_time = "Last payout #{payouts_res.last ? Time.at(cur_time - payouts_res.last['timestamp']).readable : 'more than 1 day ago'}"
-current_pool_effort = "Current pool effort: #{cur_pool_effort}%"
+current_pool_effort = "Current pool effort: #{cur_pool_effort.round(3)}%"
 lp_size = last_payout_time.size
 cpe_size = current_pool_effort.size
 lp_padding = 134 - (lp_size + cpe_size)
