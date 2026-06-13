@@ -79,7 +79,7 @@ end
 window_bar_loc = (prev_day..cur_height).each_slice(72).to_a.size - (info_res['sidechain']['window']['blocks'].to_i / 72) - 1
 
 shares = ranges.map do |range|
-  shares_res.select { |r| (!r.has_key?('uncle_of') || r['uncle_of'].squeeze('0') == '0')&& range.include?(r['side_height']) }.count.to_s
+  shares_res.select { |r| (!r.has_key?('uncle_of') || r['uncle_of'].squeeze('0') == '0') && range.include?(r['side_height']) }.count.to_s
 end.map { |s| s.gsub(/^[1-9][0-9]+$/, '+').gsub('0', '.') }.insert(window_bar_loc, '|').join
 
 uncles = ranges.map do |range|
@@ -140,7 +140,6 @@ raffle_results = {
   9 => "Bad winner at height #{raffle_res['block_height']}"
 }
 
-#raffle_valid = if system("#{raffle_validator} -x 'http://xmr-node.local:8081' -h #{raffle_res['block_height']} -q -c")
 raffle_valid = if system("#{raffle_validator} -h #{raffle_res['block_height']} -q -c")
                  raffle_results[0]
                else
